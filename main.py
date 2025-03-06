@@ -1,74 +1,76 @@
-# code without threading
 import csv
-from logging import exception
-from urllib.parse import urljoin
-from botasaurus.browser import browser, Driver
+import os
+from datetime import datetime
 from botasaurus.soupify import soupify
 from botasaurus.request import request, Request
-import time
-import random
 import threading
+import logging
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"}
-salaries_links = []
+os.makedirs("logs", exist_ok=True)
+os.makedirs("output", exist_ok=True)
 
-
-@request
-def scrape_heading_task(request: Request, data):
-    main_url = "https://www.glassdoor.co.uk"
-    i = 1
-    while i <= 25:
-        i=i+1
-        sleep_duration = random.uniform(1, 2)
-        response = request.get(
-            f"https://www.glassdoor.co.uk/Reviews/index.htm?filterType=RATING_OVERALL&sgoc=1023&page={i}&overall_rating_low=4",
-            headers=headers)
-        print(response.status_code)
-        soup = soupify(response)
-        time.sleep(sleep_duration)
-        try:
-            salary = soup.find_all('a', datatype="Salaries")
-            for s in salary:
-                link = s.get("href")
-                salaries_links.append(link)
-            # print(f" PAGE {i} ,links {salaries_links}")
-
-        except Exception as e:
-            print("EXCEPTION :", e)
-        print("\n\nTOTAL NUMBER OF LINKS:\n\n\n", len(salaries_links))
-        print(salaries_links)
-        # try:
-        #     next = soup.find('button', {'aria-label': 'Next'})
-        #     print("Next link ", next)
-        #     if next:
-        #         pass
-        #     else:
-        #         print("NEXT NOT FOUNDING")
-        #         break
-        # except Exception as e:
-        #     print("exception ",e)
-        #     print("BREAKING ....")
-        #     break
-
-        print(i)
+log_filename = f"logs/crawler_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
+)
+logger = logging.getLogger(__name__)
+write_lock = threading.Lock()
+output_file = "output/company_urls.csv"
+num_pages = 110
 
 
-    write_in_csv(salaries_links)
-    # print("ALL LINKS ",salaries_links)
+def write_to_csv(link):
+    with write_lock:
+        with open(output_file, mode="a", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow([link])
 
 
-def write_in_csv(salaries_links):
-    Heading = ["Salary_URL"]
-    with open("links2.csv", mode="w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(Heading)
-        for item in salaries_links:
-            writer.writerow([item])
+# Initialize CSV file with header
+with open(output_file, mode="w", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+    writer.writerow(["Salary_URL"])
 
 
-scrape_heading_task()
+@request(
+    cache=False,
+    parallel=10,
+    max_retry=20,
+    close_on_crash=True,
+    raise_exception=True,
+    create_error_logs=False,
+    use_stealth=True,
+)
+def crawl_companies(request: Request, data):
+    page_number = data["page_number"]
+    company_links = []
+    url = f"https://www.glassdoor.co.uk/Reviews/index.htm?filterType=RATING_OVERALL&sgoc=1023&page={page_number}&overall_rating_low=4"
+
+    try:
+        response = request.get(url)
+
+        if response.status_code == 200:
+            soup = soupify(response)
+            salary_elements = soup.find_all("a", datatype="Salaries")
+
+            for salary_element in salary_elements:
+                link = salary_element.get("href")
+                if link:
+                    company_links.append(link)
+                    write_to_csv(link)
+
+            logger.info(f"Page {page_number}: Found {len(company_links)} links")
+
+    except Exception as e:
+        logger.error(f"Page {page_number} error: {str(e)}")
+
+    return company_links
 
 
-
-
+if __name__ == "__main__":
+    pages_data = [{"page_number": i} for i in range(1, num_pages + 1)]
+    logger.info(f"Starting crawl for {len(pages_data)} pages")
+    results = crawl_companies(pages_data)
+    logger.info(f"Crawling complete. Total links collected: {len(results)}")
