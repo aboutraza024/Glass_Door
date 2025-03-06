@@ -16,9 +16,12 @@ logging.basicConfig(
     handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
+
 write_lock = threading.Lock()
 output_file = "output/company_urls.csv"
 num_pages = 110
+concurrency = 10
+base_url = "https://www.glassdoor.co.uk"
 
 
 def write_to_csv(link):
@@ -36,12 +39,12 @@ with open(output_file, mode="w", newline="", encoding="utf-8") as file:
 
 @request(
     cache=False,
-    parallel=10,
+    parallel=concurrency,
     max_retry=20,
     close_on_crash=True,
     raise_exception=True,
     create_error_logs=False,
-    use_stealth=True,
+    output=None,
 )
 def crawl_companies(request: Request, data):
     page_number = data["page_number"]
@@ -58,8 +61,9 @@ def crawl_companies(request: Request, data):
             for salary_element in salary_elements:
                 link = salary_element.get("href")
                 if link:
-                    company_links.append(link)
-                    write_to_csv(link)
+                    full_url = f"{base_url}{link}"
+                    company_links.append(full_url)
+                    write_to_csv(full_url)
 
             logger.info(f"Page {page_number}: Found {len(company_links)} links")
 
