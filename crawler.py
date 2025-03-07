@@ -17,6 +17,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+
 write_lock = threading.Lock()
 output_file = "output/company_urls.csv"
 num_pages = 110

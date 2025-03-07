@@ -47,3 +47,6 @@ output/*
 
 # Ignore all files in the logs directory
 logs/*
+
+links.csv
+main.py
