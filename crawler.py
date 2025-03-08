@@ -5,7 +5,7 @@ from botasaurus.soupify import soupify
 from botasaurus.request import request, Request
 import threading
 import logging
-
+from urllib.parse import urljoin
 os.makedirs("logs", exist_ok=True)
 os.makedirs("output", exist_ok=True)
 
@@ -63,7 +63,7 @@ def crawl_companies(request: Request, data):
             for salary_element in salary_elements:
                 link = salary_element.get("href")
                 if link:
-                    full_url = f"{base_url}{link}"
+                    full_url = urljoin(base_url,link)
                     company_links.append(full_url)
                     write_to_csv(full_url)
 
