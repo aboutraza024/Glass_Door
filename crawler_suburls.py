@@ -6,7 +6,7 @@ import csv
 from urllib.parse import urljoin
 
 input_file = "output/company_urls.csv"
-output_file = "output/company_suburls.csv"
+output_file = "output/company_suburls2.csv"
 base_url = "https://www.glassdoor.co.uk"
 companies_jobs_suburls = []
 crawler_urls = []
@@ -25,13 +25,21 @@ def write_to_csv(link):
         writer.writerow([link])
 
 
-@browser(parallel=2)  # Open 10 browser instances
+@browser(
+        reuse_driver=True,
+        parallel=20,
+        close_on_crash=True,
+        raise_exception=True,
+        create_error_logs=False,
+        output=None
+)
 def scrape_heading_task(driver: Driver, link):
     pages = 1
     try:
         driver.google_get(link)
         while True:
             # time.sleep(2)
+            start_time = time.time()
             page_numbers = driver.select_all('p.pagination_PageNumberText__zy_hr')
             total_pages = page_numbers[-1].text
             if pages > int(total_pages):
@@ -46,15 +54,20 @@ def scrape_heading_task(driver: Driver, link):
                     write_to_csv(full_url)
             element = driver.select("button[data-test='next-page']")
             if element:
-                element.scroll_into_view()
+                element.run_js("(el) => el.click()")
+                # element.scroll_into_view()
                 # time.sleep(1)
-                element.click()
+                # element.click()
                 # time.sleep(15)
             else:
                 print("Element not found.")
             pages = pages + 1
+            end_time = time.time()
+            print(f"Time taken for page {pages}: {end_time - start_time} seconds")
     except Exception as e:
         print(f"EXCEPTION {str(e)}")
+        print("[ERROR] Scraping failed for company: ", link)
+    print("[SUCCESS] Scraping completed for company: ", link)
 
 
 if __name__ == "__main__":
