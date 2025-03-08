@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 write_lock = threading.Lock()
 output_file = "output/company_urls.csv"
-num_pages = 110
+num_pages = 999
 concurrency = 10
 base_url = "https://www.glassdoor.co.uk"
 
@@ -51,7 +51,7 @@ with open(output_file, mode="w", newline="", encoding="utf-8") as file:
 def crawl_companies(request: Request, data):
     page_number = data["page_number"]
     company_links = []
-    url = f"https://www.glassdoor.co.uk/Reviews/index.htm?filterType=RATING_OVERALL&sgoc=1023&page={page_number}&overall_rating_low=4"
+    url = f"https://www.glassdoor.co.uk/Reviews/index.htm?filterType=RATING_OVERALL&sgoc=1001%2C1002%2C1003&page={page_number}&overall_rating_low=4"
 
     try:
         response = request.get(url)
