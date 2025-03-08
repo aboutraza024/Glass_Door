@@ -1,4 +1,3 @@
-
 from botasaurus.browser import browser, Driver
 from botasaurus.soupify import soupify
 from botasaurus.browser import Wait
@@ -26,13 +25,13 @@ def write_to_csv(link):
         writer.writerow([link])
 
 
-@browser(parallel=10)  # Open 10 browser instances
+@browser(parallel=2)  # Open 10 browser instances
 def scrape_heading_task(driver: Driver, link):
     pages = 1
     try:
         driver.google_get(link)
         while True:
-            time.sleep(2)
+            # time.sleep(2)
             page_numbers = driver.select_all('p.pagination_PageNumberText__zy_hr')
             total_pages = page_numbers[-1].text
             if pages > int(total_pages):
@@ -48,9 +47,9 @@ def scrape_heading_task(driver: Driver, link):
             element = driver.select("button[data-test='next-page']")
             if element:
                 element.scroll_into_view()
-                time.sleep(1)
+                # time.sleep(1)
                 element.click()
-                time.sleep(15)
+                # time.sleep(15)
             else:
                 print("Element not found.")
             pages = pages + 1
@@ -61,5 +60,5 @@ def scrape_heading_task(driver: Driver, link):
 if __name__ == "__main__":
     urls = read_url_from_csv()
     print(f"Starting scraping with 10 browser instances for {len(urls)} URLs.")
-    scrape_heading_task(["https://www.glassdoor.co.uk/Salary/Johnson-and-Johnson-Salaries-E364.htm"])  # Pass all URLs to scrape concurrently
+    scrape_heading_task(urls)
     print("Scraping complete.")
