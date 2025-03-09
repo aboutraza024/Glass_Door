@@ -1,3 +1,4 @@
+# jobs scrapper
 import time
 import csv
 from botasaurus.browser import browser, Driver
@@ -23,7 +24,7 @@ with open(output_file, mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     writer.writerow(header)
 
-url = "https://www.glassdoor.co.uk/Salary/Freelance-Freelancer-Salaries-E1130527_D_KO10,20.htm"
+
 
 # List of experience levels to click
 experience_levels = ["All Years of Experience",
@@ -144,6 +145,6 @@ def scrape_companies_data(driver: Driver, link):
     except Exception as e:
         print(f"Error: {e}")
 urls=read_url_from_csv()
-scrape_companies_data(urls[10:12])
+scrape_companies_data(urls[0:10])
 
 
