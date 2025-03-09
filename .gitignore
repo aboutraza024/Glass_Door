@@ -49,4 +49,6 @@ output/*
 logs/*
 
 links.csv
-main.py
+
+
+error_logs/*

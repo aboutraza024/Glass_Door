@@ -2,7 +2,7 @@ import time
 import csv
 from botasaurus.browser import browser, Driver
 
-input_file = "output/company_suburls.csv"  # Change it to the correct suburls
+input_file = "output/company_suburls2.csv"  # Change it to the correct suburls
 output_file = "output/companies_data.csv"
 
 
@@ -145,4 +145,5 @@ def scrape_companies_data(driver: Driver, link):
 
 
 scrape_companies_data(url)
+
 
