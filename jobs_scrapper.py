@@ -4,7 +4,7 @@ import csv
 from botasaurus.browser import browser, Driver
 
 input_file = "output/company_suburls.csv"
-output_file = "output/companies_data.csv"
+output_file = "output/companies_data1.csv"
 
 
 def read_url_from_csv():
@@ -13,28 +13,30 @@ def read_url_from_csv():
         crawler_urls = [row[0] for row in reader if row]
         return crawler_urls[1:]
 
-header=["COUNTRY","COMPANY","JOB TITLE","YEARS OF EXPERIENCE","BASE PAY","ADDITIONAL PAY AVERAGE","ADDITIONAL PAY RANGE","CONFIDENCE","SALARIES SUBMITTED","UPDATED"]
-companies_data=[]
+
+header = ["COUNTRY", "COMPANY", "JOB TITLE", "YEARS OF EXPERIENCE", "BASE PAY", "ADDITIONAL PAY AVERAGE",
+          "ADDITIONAL PAY RANGE", "CONFIDENCE", "SALARIES SUBMITTED", "UPDATED"]
+companies_data = []
+
+
 def write_to_csv(data):
     with open(output_file, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(data)
 
+
 with open(output_file, mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     writer.writerow(header)
 
-
-
 # List of experience levels to click
 experience_levels = ["All Years of Experience",
-    "0-1 Year", "1-3 Years", "4-6 Years",
-    "7-9 Years", "10-14 Years", "15+ Years"
-]
+                     "0-1 Year", "1-3 Years", "4-6 Years",
+                     "7-9 Years", "10-14 Years", "15+ Years"
+                     ]
 
 
 def wait_for_element(driver, selector, timeout=5):
-
     start_time = time.time()
     while time.time() - start_time < timeout:
         element = driver.select(selector)
@@ -45,7 +47,6 @@ def wait_for_element(driver, selector, timeout=5):
 
 
 def open_experience_dropdown(driver):
-
     try:
         experience_elements = driver.select_all("div[class*='filter-chip_FilterChip']")
         if len(experience_elements) > 1:
@@ -55,15 +56,17 @@ def open_experience_dropdown(driver):
     except Exception as e:
         print(f"Error opening dropdown: {e}")
 
-base_pay_text=[]
-def write_to_csv(data):
 
+base_pay_text = []
+
+
+def write_to_csv(data):
     with open(output_file, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(data)
 
-def scrape_required_info(driver, experience):
 
+def scrape_required_info(driver, experience):
     try:
         companies_data = []  # New list for each row
 
@@ -80,7 +83,7 @@ def scrape_required_info(driver, experience):
             # job_title = split_title[len(split_title) // 2]
             companies_data.append(job_text)
         else:
-            job_title="N/A"
+            job_title = "N/A"
             companies_data.append(job_title)
 
         companies_data.append(experience)
@@ -118,9 +121,18 @@ def scrape_required_info(driver, experience):
     except Exception as e:
         print("Error while scraping data:", e)
 
-@browser(parallel=3)
-def scrape_companies_data(driver: Driver, link):
 
+@browser(
+    reuse_driver=True,
+    parallel=7,
+    close_on_crash=True,
+    raise_exception=True,
+    create_error_logs=False,
+    output=None
+)
+def scrape_companies_data(driver: Driver, link):
+    total_links = len(link)
+    print(f"This Link: {link} Includes {total_links} Jobs For Scraping")
     try:
         driver.google_get(link)
         # time.sleep(3)  # Wait for page to load
@@ -129,13 +141,12 @@ def scrape_companies_data(driver: Driver, link):
             open_experience_dropdown(driver)  # Open dropdown
             # time.sleep(1)
 
-
             button_selector = f"button[aria-label='{exp}']"
             experience_button = wait_for_element(driver, button_selector, timeout=5)
 
             if experience_button:
                 experience_button.click()
-                scrape_required_info(driver,exp)
+                scrape_required_info(driver, exp)
                 print(f"Clicked: {exp}")
             else:
                 print(f"Button for {exp} not found!")
@@ -143,8 +154,13 @@ def scrape_companies_data(driver: Driver, link):
             # time.sleep(5)
 
     except Exception as e:
-        print(f"Error: {e}")
-urls=read_url_from_csv()
-scrape_companies_data(urls[0:10])
+        print(f"EXCEPTION {str(e)}")
+        print("[ERROR] Scraping failed for company: ", link)
+    print("[SUCCESS] Scraping completed for company: ", link)
+
+
+if __name__ == "__main__":
+    urls = read_url_from_csv()
+    scrape_companies_data(urls[300:1300])
 
 
