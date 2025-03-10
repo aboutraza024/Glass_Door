@@ -34,7 +34,7 @@ experience_levels = ["All Years of Experience",
 
 
 def wait_for_element(driver, selector, timeout=5):
-    """Wait for an element to appear on the page."""
+
     start_time = time.time()
     while time.time() - start_time < timeout:
         element = driver.select(selector)
@@ -45,25 +45,25 @@ def wait_for_element(driver, selector, timeout=5):
 
 
 def open_experience_dropdown(driver):
-    """ Opens the experience filter dropdown. """
+
     try:
         experience_elements = driver.select_all("div[class*='filter-chip_FilterChip']")
         if len(experience_elements) > 1:
-            time.sleep(1.3)
+            # time.sleep(1.3)
             experience_elements[1].click()
-            time.sleep(2)
+            # time.sleep(2)
     except Exception as e:
         print(f"Error opening dropdown: {e}")
 
 base_pay_text=[]
 def write_to_csv(data):
-    """Appends a row to the CSV file."""
+
     with open(output_file, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(data)
 
 def scrape_required_info(driver, experience):
-    """Scrapes required information and writes to CSV."""
+
     try:
         companies_data = []  # New list for each row
 
@@ -76,9 +76,9 @@ def scrape_required_info(driver, experience):
 
         job_text = driver.select('h1.undefined.hero_dInline__6YBn7 > span').text
         if job_text:
-            split_title = job_text.split()
-            job_title = split_title[len(split_title) // 2]
-            companies_data.append(job_title)
+            # split_title = job_text.split()
+            # job_title = split_title[len(split_title) // 2]
+            companies_data.append(job_text)
         else:
             job_title="N/A"
             companies_data.append(job_title)
@@ -123,13 +123,13 @@ def scrape_companies_data(driver: Driver, link):
 
     try:
         driver.google_get(link)
-        time.sleep(3)  # Wait for page to load
+        # time.sleep(3)  # Wait for page to load
 
         for exp in experience_levels:
             open_experience_dropdown(driver)  # Open dropdown
-            time.sleep(1)
+            # time.sleep(1)
 
-            # Wait for button to appear
+
             button_selector = f"button[aria-label='{exp}']"
             experience_button = wait_for_element(driver, button_selector, timeout=5)
 
@@ -140,7 +140,7 @@ def scrape_companies_data(driver: Driver, link):
             else:
                 print(f"Button for {exp} not found!")
 
-            time.sleep(5)  # Wait for data to load
+            # time.sleep(5)
 
     except Exception as e:
         print(f"Error: {e}")
